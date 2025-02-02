@@ -8,7 +8,7 @@ use std::{
 
 use bindgen::Builder;
 
-const PHP_VERSION: &str = "8.2";
+const PHP_VERSION: &str = "8.4";
 
 fn main() {
     println!("cargo:rerun-if-changed=src/wrapper.h");
@@ -24,6 +24,7 @@ fn main() {
                 "https://github.com/crazywhalecc/static-php-cli.git",
                 "spc",
                 "--depth=1",
+                "--branch=feat/gnu-static",
             ],
         );
         run_command_or_fail(
@@ -51,6 +52,7 @@ fn main() {
             "php",
             &[
                 "bin/spc",
+                "--libc=glibc",
                 "build",
                 "opcache",
                 "--build-embed",
