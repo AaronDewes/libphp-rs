@@ -17,6 +17,207 @@ fn main() {
     println!("cargo:rerun-if-changed=src/php-sapi.c");
     println!("cargo:rerun-if-env-change=PHP_VERSION");
 
+    
+    let extensions = [
+        "opcache",
+        #[cfg(feature = "amqp")]
+        "amqp",
+        #[cfg(feature = "apcu")]
+        "apcu",
+        #[cfg(feature = "ast")]
+        "ast",
+        #[cfg(feature = "bcmath")]
+        "bcmath",
+        #[cfg(feature = "bz2")]
+        "bz2",
+        #[cfg(feature = "calendar")]
+        "calendar",
+        #[cfg(feature = "ctype")]
+        "ctype",
+        #[cfg(feature = "curl")]
+        "curl",
+        #[cfg(feature = "dba")]
+        "dba",
+        #[cfg(feature = "dio")]
+        "dio",
+        #[cfg(feature = "dom")]
+        "dom",
+        #[cfg(feature = "ds")]
+        "ds",
+        #[cfg(feature = "enchant")]
+        "enchant",
+        #[cfg(feature = "event")]
+        "event",
+        #[cfg(feature = "exif")]
+        "exif",
+        #[cfg(feature = "ffi")]
+        "ffi",
+        #[cfg(feature = "fileinfo")]
+        "fileinfo",
+        #[cfg(feature = "filter")]
+        "filter",
+        #[cfg(feature = "ftp")]
+        "ftp",
+        #[cfg(feature = "gd")]
+        "gd",
+        #[cfg(feature = "gettext")]
+        "gettext",
+        #[cfg(feature = "glfw")]
+        "glfw",
+        #[cfg(feature = "gmp")]
+        "gmp",
+        #[cfg(feature = "gmssl")]
+        "gmssl",
+        #[cfg(feature = "grpc")]
+        "grpc",
+        #[cfg(feature = "iconv")]
+        "iconv",
+        #[cfg(feature = "igbinary")]
+        "igbinary",
+        #[cfg(feature = "imagick")]
+        "imagick",
+        #[cfg(feature = "imap")]
+        "imap",
+        #[cfg(feature = "inotify")]
+        "inotify",
+        #[cfg(feature = "intl")]
+        "intl",
+        #[cfg(feature = "ldap")]
+        "ldap",
+        #[cfg(feature = "libxml")]
+        "libxml",
+        #[cfg(feature = "mbregex")]
+        "mbregex",
+        #[cfg(feature = "mbstring")]
+        "mbstring",
+        #[cfg(feature = "memcache")]
+        "memcache",
+        // TODO: mcrypt is not supported by static-php-cli yet
+        // #[cfg(feature = "mcrypt")] "mcrypt",
+        #[cfg(feature = "memcached")]
+        "memcached",
+        #[cfg(feature = "mongodb")]
+        "mongodb",
+        #[cfg(feature = "msgpack")]
+        "msgpack",
+        #[cfg(feature = "mysqli")]
+        "mysqli",
+        #[cfg(feature = "mysqlnd")]
+        "mysqlnd",
+        // TODO: oci8 is not supported by static-php-cli yet
+        //#[cfg(feature = "oci8")]
+        //"oci8",
+        #[cfg(feature = "openssl")]
+        "openssl",
+        #[cfg(feature = "opentelemetry")]
+        "opentelemetry",
+        #[cfg(feature = "parallel")]
+        "parallel",
+        #[cfg(feature = "password-argon2")]
+        "password-argon2",
+        #[cfg(feature = "pcntl")]
+        "pcntl",
+        #[cfg(feature = "pdo")]
+        "pdo",
+        #[cfg(feature = "pdo_mysql")]
+        "pdo_mysql",
+        #[cfg(feature = "pdo_pgsql")]
+        "pdo_pgsql",
+        #[cfg(feature = "pdo_sqlite")]
+        "pdo_sqlite",
+        #[cfg(feature = "pdo_sqlsrv")]
+        "pdo_sqlsrv",
+        #[cfg(feature = "pgsql")]
+        "pgsql",
+        #[cfg(feature = "phar")]
+        "phar",
+        #[cfg(feature = "posix")]
+        "posix",
+        #[cfg(feature = "protobuf")]
+        "protobuf",
+        #[cfg(feature = "rar")]
+        "rar",
+        #[cfg(feature = "rdkafka")]
+        "rdkafka",
+        #[cfg(feature = "readline")]
+        "readline",
+        #[cfg(feature = "redis")]
+        "redis",
+        #[cfg(feature = "session")]
+        "session",
+        #[cfg(feature = "shmop")]
+        "shmop",
+        #[cfg(feature = "simdjson")]
+        "simdjson",
+        #[cfg(feature = "simplexml")]
+        "simplexml",
+        #[cfg(feature = "snappy")]
+        "snappy",
+        #[cfg(feature = "soap")]
+        "soap",
+        #[cfg(feature = "sockets")]
+        "sockets",
+        #[cfg(feature = "sodium")]
+        "sodium",
+        #[cfg(feature = "spx")]
+        "spx",
+        #[cfg(feature = "sqlite3")]
+        "sqlite3",
+        #[cfg(feature = "sqlsrv")]
+        "sqlsrv",
+        #[cfg(feature = "ssh2")]
+        "ssh2",
+        #[cfg(feature = "swoole")]
+        "swoole",
+        #[cfg(feature = "swoole-hook-mysql")]
+        "swoole-hook-mysql",
+        #[cfg(feature = "swoole-hook-pgsql")]
+        "swoole-hook-pgsql",
+        #[cfg(feature = "swoole-hook-sqlite")]
+        "swoole-hook-sqlite",
+        #[cfg(feature = "swow")]
+        "swow",
+        #[cfg(feature = "sysvmsg")]
+        "sysvmsg",
+        #[cfg(feature = "sysvsem")]
+        "sysvsem",
+        #[cfg(feature = "sysvshm")]
+        "sysvshm",
+        #[cfg(feature = "tidy")]
+        "tidy",
+        #[cfg(feature = "tokenizer")]
+        "tokenizer",
+        #[cfg(feature = "uuid")]
+        "uuid",
+        #[cfg(feature = "uv")]
+        "uv",
+        // TODO: xdebug is not supported by static-php-cli yet
+        // #[cfg(feature = "xdebug")]
+        // "xdebug",
+        #[cfg(feature = "xhprof")]
+        "xhprof",
+        #[cfg(feature = "xlswriter")]
+        "xlswriter",
+        #[cfg(feature = "xml")]
+        "xml",
+        #[cfg(feature = "xmlreader")]
+        "xmlreader",
+        #[cfg(feature = "xmlwriter")]
+        "xmlwriter",
+        #[cfg(feature = "xsl")]
+        "xsl",
+        #[cfg(feature = "yac")]
+        "yac",
+        #[cfg(feature = "yaml")]
+        "yaml",
+        #[cfg(feature = "zip")]
+        "zip",
+        #[cfg(feature = "zlib")]
+        "zlib",
+        #[cfg(feature = "zstd")]
+        "zstd",
+    ].join(",");
+
     if !target_exists("spc") {
         std::fs::create_dir_all(target_dir("spc")).unwrap();
         run_command_or_fail(target_dir("spc"), "git", &["init"]);
@@ -58,6 +259,7 @@ fn main() {
                 "download",
                 "php-src,pkg-config,micro",
                 format!("--with-php={}", PHP_VERSION).as_str(),
+                format!("--for-extensions={}", extensions).as_str(),
             ],
         );
         run_command_or_fail(
@@ -65,205 +267,6 @@ fn main() {
             "php",
             &["bin/spc", "doctor", "--auto-fix"],
         );
-        let extensions = [
-            "opcache",
-            #[cfg(feature = "amqp")]
-            "amqp",
-            #[cfg(feature = "apcu")]
-            "apcu",
-            #[cfg(feature = "ast")]
-            "ast",
-            #[cfg(feature = "bcmath")]
-            "bcmath",
-            #[cfg(feature = "bz2")]
-            "bz2",
-            #[cfg(feature = "calendar")]
-            "calendar",
-            #[cfg(feature = "ctype")]
-            "ctype",
-            #[cfg(feature = "curl")]
-            "curl",
-            #[cfg(feature = "dba")]
-            "dba",
-            #[cfg(feature = "dio")]
-            "dio",
-            #[cfg(feature = "dom")]
-            "dom",
-            #[cfg(feature = "ds")]
-            "ds",
-            #[cfg(feature = "enchant")]
-            "enchant",
-            #[cfg(feature = "event")]
-            "event",
-            #[cfg(feature = "exif")]
-            "exif",
-            #[cfg(feature = "ffi")]
-            "ffi",
-            #[cfg(feature = "fileinfo")]
-            "fileinfo",
-            #[cfg(feature = "filter")]
-            "filter",
-            #[cfg(feature = "ftp")]
-            "ftp",
-            #[cfg(feature = "gd")]
-            "gd",
-            #[cfg(feature = "gettext")]
-            "gettext",
-            #[cfg(feature = "glfw")]
-            "glfw",
-            #[cfg(feature = "gmp")]
-            "gmp",
-            #[cfg(feature = "gmssl")]
-            "gmssl",
-            #[cfg(feature = "grpc")]
-            "grpc",
-            #[cfg(feature = "iconv")]
-            "iconv",
-            #[cfg(feature = "igbinary")]
-            "igbinary",
-            #[cfg(feature = "imagick")]
-            "imagick",
-            #[cfg(feature = "imap")]
-            "imap",
-            #[cfg(feature = "inotify")]
-            "inotify",
-            #[cfg(feature = "intl")]
-            "intl",
-            #[cfg(feature = "ldap")]
-            "ldap",
-            #[cfg(feature = "libxml")]
-            "libxml",
-            #[cfg(feature = "mbregex")]
-            "mbregex",
-            #[cfg(feature = "mbstring")]
-            "mbstring",
-            #[cfg(feature = "memcache")]
-            "memcache",
-            // TODO: mcrypt is not supported by static-php-cli yet
-            // #[cfg(feature = "mcrypt")] "mcrypt",
-            #[cfg(feature = "memcached")]
-            "memcached",
-            #[cfg(feature = "mongodb")]
-            "mongodb",
-            #[cfg(feature = "msgpack")]
-            "msgpack",
-            #[cfg(feature = "mysqli")]
-            "mysqli",
-            #[cfg(feature = "mysqlnd")]
-            "mysqlnd",
-            // TODO: oci8 is not supported by static-php-cli yet
-            //#[cfg(feature = "oci8")]
-            //"oci8",
-            #[cfg(feature = "openssl")]
-            "openssl",
-            #[cfg(feature = "opentelemetry")]
-            "opentelemetry",
-            #[cfg(feature = "parallel")]
-            "parallel",
-            #[cfg(feature = "password-argon2")]
-            "password-argon2",
-            #[cfg(feature = "pcntl")]
-            "pcntl",
-            #[cfg(feature = "pdo")]
-            "pdo",
-            #[cfg(feature = "pdo_mysql")]
-            "pdo_mysql",
-            #[cfg(feature = "pdo_pgsql")]
-            "pdo_pgsql",
-            #[cfg(feature = "pdo_sqlite")]
-            "pdo_sqlite",
-            #[cfg(feature = "pdo_sqlsrv")]
-            "pdo_sqlsrv",
-            #[cfg(feature = "pgsql")]
-            "pgsql",
-            #[cfg(feature = "phar")]
-            "phar",
-            #[cfg(feature = "posix")]
-            "posix",
-            #[cfg(feature = "protobuf")]
-            "protobuf",
-            #[cfg(feature = "rar")]
-            "rar",
-            #[cfg(feature = "rdkafka")]
-            "rdkafka",
-            #[cfg(feature = "readline")]
-            "readline",
-            #[cfg(feature = "redis")]
-            "redis",
-            #[cfg(feature = "session")]
-            "session",
-            #[cfg(feature = "shmop")]
-            "shmop",
-            #[cfg(feature = "simdjson")]
-            "simdjson",
-            #[cfg(feature = "simplexml")]
-            "simplexml",
-            #[cfg(feature = "snappy")]
-            "snappy",
-            #[cfg(feature = "soap")]
-            "soap",
-            #[cfg(feature = "sockets")]
-            "sockets",
-            #[cfg(feature = "sodium")]
-            "sodium",
-            #[cfg(feature = "spx")]
-            "spx",
-            #[cfg(feature = "sqlite3")]
-            "sqlite3",
-            #[cfg(feature = "sqlsrv")]
-            "sqlsrv",
-            #[cfg(feature = "ssh2")]
-            "ssh2",
-            #[cfg(feature = "swoole")]
-            "swoole",
-            #[cfg(feature = "swoole-hook-mysql")]
-            "swoole-hook-mysql",
-            #[cfg(feature = "swoole-hook-pgsql")]
-            "swoole-hook-pgsql",
-            #[cfg(feature = "swoole-hook-sqlite")]
-            "swoole-hook-sqlite",
-            #[cfg(feature = "swow")]
-            "swow",
-            #[cfg(feature = "sysvmsg")]
-            "sysvmsg",
-            #[cfg(feature = "sysvsem")]
-            "sysvsem",
-            #[cfg(feature = "sysvshm")]
-            "sysvshm",
-            #[cfg(feature = "tidy")]
-            "tidy",
-            #[cfg(feature = "tokenizer")]
-            "tokenizer",
-            #[cfg(feature = "uuid")]
-            "uuid",
-            #[cfg(feature = "uv")]
-            "uv",
-            // TODO: xdebug is not supported by static-php-cli yet
-            // #[cfg(feature = "xdebug")]
-            // "xdebug",
-            #[cfg(feature = "xhprof")]
-            "xhprof",
-            #[cfg(feature = "xlswriter")]
-            "xlswriter",
-            #[cfg(feature = "xml")]
-            "xml",
-            #[cfg(feature = "xmlreader")]
-            "xmlreader",
-            #[cfg(feature = "xmlwriter")]
-            "xmlwriter",
-            #[cfg(feature = "xsl")]
-            "xsl",
-            #[cfg(feature = "yac")]
-            "yac",
-            #[cfg(feature = "yaml")]
-            "yaml",
-            #[cfg(feature = "zip")]
-            "zip",
-            #[cfg(feature = "zlib")]
-            "zlib",
-            #[cfg(feature = "zstd")]
-            "zstd",
-        ];
 
         run_command_or_fail(
             target_dir("spc"),
@@ -272,7 +275,7 @@ fn main() {
                 "bin/spc",
                 "--libc=glibc",
                 "build",
-                extensions.join(",").as_str(),
+                &extensions,
                 "--build-embed",
                 "--enable-zts",
             ],
