@@ -13,20 +13,38 @@ const PHP_VERSION: &str = "8.4";
 fn main() {
     println!("cargo:rerun-if-changed=src/wrapper.h");
     println!("cargo:rerun-if-changed=src/wrapper.c");
+    println!("cargo:rerun-if-changed=src/php-sapi.h");
+    println!("cargo:rerun-if-changed=src/php-sapi.c");
     println!("cargo:rerun-if-env-change=PHP_VERSION");
 
     if !target_exists("spc") {
+        std::fs::create_dir_all(target_dir("spc")).unwrap();
         run_command_or_fail(
-            target_dir(""),
+            target_dir("spc"),
+            "git",
+            &["init"],
+        );
+        run_command_or_fail(
+            target_dir("spc"),
             "git",
             &[
-                "clone",
-                "https://github.com/crazywhalecc/static-php-cli.git",
-                "spc",
-                "--depth=1",
-                "--branch=feat/gnu-static",
+                "remote",
+                "add",
+                "origin",
+                "https://github.com/crazywhalecc/static-php-cli.git"
             ],
         );
+        run_command_or_fail(
+            target_dir("spc"),
+            "git",
+            &["fetch", "origin", "daa6196afc6090417f073d123728758ae6d117f4"],
+        );
+        run_command_or_fail(
+            target_dir("spc"),
+            "git",
+            &["checkout", "daa6196afc6090417f073d123728758ae6d117f4"],
+        );
+        std::env::set_var("SPC_NO_MUSL_PATH", "yes");
         run_command_or_fail(
             target_dir("spc"),
             "composer",
@@ -75,9 +93,21 @@ fn main() {
     let bindings = Builder::default()
         .clang_args(&includes)
         .derive_default(true)
+        .derive_debug(true)
+        .allowlist_var("PHP_OUTPUT_HANDLER_STDFLAGS")
         .allowlist_type("zval")
         .allowlist_type("zend_constant")
         .allowlist_type("zend_fcall_info")
+        .allowlist_type("sapi_header_struct")
+        .allowlist_type("sapi_headers_struct")
+        .allowlist_type("sapi_header_op_enum")
+        .allowlist_type("sapi_module_struct")
+        .allowlist_type("zend_llist_position")
+        .allowlist_type("zend_stat_t")
+        .allowlist_type("partial_sapi_module_struct")
+        .allowlist_function("php_module_startup")
+        .allowlist_function("zend_llist_get_first_ex")
+        .allowlist_function("zend_llist_get_next_ex")
         .allowlist_function("zend_string_init")
         .allowlist_function("zend_call_function")
         .allowlist_function("_zend_new_array")
@@ -87,8 +117,11 @@ fn main() {
         .allowlist_function("zend_hash_get_current_data_ex")
         .allowlist_function("zend_hash_move_forward_ex")
         .allowlist_function("zend_eval_string_ex")
-        .allowlist_function("php_embed_init")
-        .allowlist_function("php_embed_shutdown")
+        .allowlist_function("php_rust_init")
+        .allowlist_function("php_request_shutdown")
+        .allowlist_function("php_module_shutdown")
+        .allowlist_function("sapi_shutdown")
+        .allowlist_function("tsrm_shutdown")
         .allowlist_function("zend_compile_string")
         .allowlist_function("zend_get_type")
         .allowlist_function("zval_ptr_dtor")
@@ -96,8 +129,21 @@ fn main() {
         .allowlist_function("php_execute_script")
         .allowlist_function("php_execute_simple_script")
         .allowlist_function("php_register_variable_ex")
-        .allowlist_type("zend_function_entry")
         .allowlist_function("zend_register_functions")
+        .allowlist_function("php_output_activate")
+        .allowlist_function("php_output_start_user")
+        .allowlist_function("php_output_end_all")
+        .allowlist_function("php_output_deactivate")
+        .allowlist_function("php_handle_aborted_connection")
+        .allowlist_function("php_rust_clear_server_context")
+        .allowlist_function("php_rust_set_tmp_server_ctx")
+        .allowlist_function("php_rust_set_server_context")
+        .allowlist_function("php_register_variable_safe")
+        .allowlist_function("libphp_zval_addref_p")
+        .allowlist_function("libphp_zval_delref_p")
+        .allowlist_function("zend_hash_add")
+        .allowlist_function("zend_hash_next_index_insert")
+        .allowlist_type("zend_function_entry")        
         .header("src/wrapper.h")
         .generate()
         .expect("Unable to generate bindings");
@@ -110,6 +156,7 @@ fn main() {
 
     cc::Build::new()
         .file("src/wrapper.c")
+        .file("src/rust-sapi.c")
         .includes(
             &includes
                 .iter()

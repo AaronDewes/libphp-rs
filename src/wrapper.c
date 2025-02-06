@@ -12,7 +12,7 @@ const char *libphp_zval_get_string(zval *pz)
 
 zend_string* libphp_zend_string_init(const char *str)
 {
-    return zend_string_init(ZEND_STRL(str), 0);
+    return zend_string_init(str, strlen(str), 0);
 }
 
 const char* libphp_var_export(zval *pz) 
@@ -52,4 +52,12 @@ void libphp_register_constant(const char *name, zval *value)
     c.name = zend_string_init_interned(name, strlen(name), 1);
 
     zend_register_constant(&c);
+}
+
+uint32_t libphp_zval_addref_p(zval* pz) {
+	Z_ADDREF_P(pz);
+}
+
+uint32_t libphp_zval_delref_p(zval* pz) {
+	Z_DELREF_P(pz);
 }

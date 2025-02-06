@@ -1,7 +1,7 @@
 #include "Zend/zend.h"
 #include "Zend/zend_API.h"
 #include "main/php.h"
-#include "sapi/embed/php_embed.h"
+#include "rust-sapi.h"
 #include "Zend/zend_compile.h"
 #include <Zend/zend_types.h>
 #include <ext/standard/php_var.h>
@@ -22,3 +22,6 @@ zend_string* libphp_zend_string_init();
 void libphp_register_variable(const char *key, zval *value);
 
 void libphp_register_constant(const char *name, zval *value);
+
+uint32_t libphp_zval_addref_p(zval* pz);
+uint32_t libphp_zval_delref_p(zval* pz);

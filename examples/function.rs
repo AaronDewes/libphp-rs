@@ -1,4 +1,7 @@
-use libphp::{exec::Context, sys::{zend_execute_data, zval}};
+use libphp::{
+    exec::Context,
+    sys::{zend_execute_data, zval},
+};
 
 fn main() {
     let mut context = Context::new();

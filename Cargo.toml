@@ -6,6 +6,9 @@ version = "0.1.0"
 edition = "2021"
 
 [build-dependencies]
-bindgen = "0.68.1"
+bindgen = "0.71"
 cc = "1.0.83"
 num_cpus = "1.16.0"
+
+[dependencies]
+tracing = "0.1.41"

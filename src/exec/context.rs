@@ -1,26 +1,36 @@
-use std::{ffi::CString, ptr::{null_mut, null}};
+use std::{
+    ffi::CString,
+    ptr::{null, null_mut, NonNull},
+};
 
 use crate::{
+    sapi::{
+        embedded::EmbeddedSapi,
+        raw::{get_partial_module_for_c, RawPhpSapi},
+    },
     sys::{
-        libphp_register_variable, php_embed_init, php_embed_shutdown, php_execute_simple_script,
-        zend_eval_string_ex, zend_file_handle, zend_stream_init_filename, zval, libphp_register_constant, zend_fcall_info, zend_call_function, libphp_zval_create_string, zend_fcall_info_cache, zend_function_entry, zend_execute_data, zend_register_functions, zend_arg_info, zend_internal_arg_info, zend_type,
+        libphp_register_constant, libphp_register_variable, libphp_zval_create_string,
+        php_execute_simple_script, php_rust_clear_server_context, php_rust_init,
+        zend_call_function, zend_eval_string_ex, zend_execute_data, zend_fcall_info,
+        zend_fcall_info_cache, zend_file_handle, zend_function_entry, zend_internal_arg_info,
+        zend_register_functions, zend_stream_init_filename, zend_type, zval
     },
     value::Value,
 };
 
-pub type OnInitCallback = fn(&mut Context);
+pub type OnInitCallback<SapiContext, Sapi> = fn(&mut Context<SapiContext, Sapi>);
 pub type FunctionImplementation = unsafe extern "C" fn(*mut zend_execute_data, *mut zval);
 
-#[derive(Default)]
-pub struct Context {
+pub struct Context<'a, SapiContext, Sapi: crate::sapi::raw::RawPhpSapi = EmbeddedSapi> {
     initd: bool,
-    on_init: Option<OnInitCallback>,
+    on_init: Option<OnInitCallback<SapiContext, Sapi>>,
     argc: i32,
     argv: Vec<String>,
     bindings: Vec<Value>,
+    content: &'a mut SapiContext,
 }
 
-impl Context {
+impl<'a> Context<'a, (), EmbeddedSapi> {
     /// Create a new PHP execution context.
     pub fn new() -> Self {
         Self {
@@ -29,6 +39,22 @@ impl Context {
             argc: 0,
             argv: Vec::new(),
             bindings: Vec::new(),
+            // TODO: Free context again
+            content: Box::leak(Box::new(())),
+        }
+    }
+}
+
+impl<'a, SapiContext, Sapi: RawPhpSapi> Context<'a, SapiContext, Sapi> {
+    /// Create a new PHP execution context.
+    pub fn new_with_sapi(content: Box<SapiContext>) -> Self {
+        Self {
+            initd: false,
+            on_init: None,
+            argc: 0,
+            argv: Vec::new(),
+            bindings: Vec::new(),
+            content: Box::leak(content),
         }
     }
 
@@ -60,7 +86,7 @@ impl Context {
 
     /// Define a new function in the PHP context.
     pub fn define_function(&mut self, name: &str, function: FunctionImplementation) {
-        let mut function_entry = zend_function_entry::default();   
+        let mut function_entry = zend_function_entry::default();
         let function_name_cstr = CString::new(name).unwrap();
 
         let mut args: Vec<zend_internal_arg_info> = Vec::new();
@@ -76,11 +102,15 @@ impl Context {
         function_entry.fname = function_name_cstr.as_ptr();
         function_entry.num_args = 0;
         function_entry.handler = Some(function);
-        function_entry.arg_info = Box::into_raw(args.into_boxed_slice()) as *const zend_internal_arg_info;
-        
+        function_entry.arg_info =
+            Box::into_raw(args.into_boxed_slice()) as *const zend_internal_arg_info;
+
         let mut functions = Vec::new();
         functions.push(function_entry);
         
+        let empty_entry = zend_function_entry::default();
+        functions.push(empty_entry);
+
         unsafe {
             zend_register_functions(null_mut(), functions.as_mut_ptr(), null_mut(), 0);
         }
@@ -150,11 +180,13 @@ impl Context {
         self.init();
 
         let mut retval_ptr = zval::default();
-        
+
         let mut fcall = zend_fcall_info::default();
         let mut fcall_cache = zend_fcall_info_cache::default();
 
-        unsafe { libphp_zval_create_string(&mut fcall.function_name, name_cstring.as_ptr()); }
+        unsafe {
+            libphp_zval_create_string(&mut fcall.function_name, name_cstring.as_ptr());
+        }
 
         fcall.param_count = 0;
         fcall.object = null_mut();
@@ -175,12 +207,17 @@ impl Context {
         self.init();
 
         // Convert the given arguments into a list of values.
-        let mut args = args.iter().map(|arg| arg.clone().into()).collect::<Vec<Value>>();
+        let mut args = args
+            .iter()
+            .map(|arg| arg.clone().into())
+            .collect::<Vec<Value>>();
         let mut retval_ptr = zval::default();
         let mut fcall = zend_fcall_info::default();
         let mut fcall_cache = zend_fcall_info_cache::default();
 
-        unsafe { libphp_zval_create_string(&mut fcall.function_name, name_cstring.as_ptr()); }
+        unsafe {
+            libphp_zval_create_string(&mut fcall.function_name, name_cstring.as_ptr());
+        }
 
         fcall.param_count = args.len() as u32;
         fcall.params = args.first_mut().unwrap().as_mut_ptr();
@@ -196,7 +233,7 @@ impl Context {
     }
 
     /// Register a callback to be called when the execution context is initialised.
-    pub fn on_init(&mut self, callback: OnInitCallback) {
+    pub fn on_init(&mut self, callback: OnInitCallback<SapiContext, Sapi>) {
         self.on_init = Some(callback);
     }
 
@@ -209,7 +246,8 @@ impl Context {
         }
 
         unsafe {
-            php_embed_init(
+            php_rust_init(
+                get_partial_module_for_c::<Sapi>(),
                 self.argc,
                 if self.argv.is_empty() {
                     null_mut()
@@ -220,8 +258,10 @@ impl Context {
                         .collect::<Vec<*mut i8>>()
                         .as_mut_ptr()
                 },
+                self.content as *mut SapiContext as *mut std::ffi::c_void
             );
         }
+        
 
         if let Some(callback) = self.on_init {
             callback(self);
@@ -233,14 +273,21 @@ impl Context {
     /// Close the execution context.
     ///
     /// NOTE: This method does not need to be called manually. The execution context is automatically closed when Context is dropped.
-    pub fn close(&self) {
+    pub fn close(&mut self) {
+        // Explicitly drop the leaked &mut SapiContext
+        drop(unsafe {
+            Box::from_raw(self.content)
+        });
+        unsafe {
+            php_rust_clear_server_context();
+        }
         if self.initd {
-            unsafe { php_embed_shutdown() };
+            unsafe { Sapi::shutdown(std::ptr::null_mut()) };
         }
     }
 }
 
-impl Drop for Context {
+impl<SapiContext, Sapi: RawPhpSapi> Drop for Context<'_, SapiContext, Sapi> {
     fn drop(&mut self) {
         self.close();
     }
