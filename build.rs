@@ -17,7 +17,6 @@ fn main() {
     println!("cargo:rerun-if-changed=src/php-sapi.c");
     println!("cargo:rerun-if-env-change=PHP_VERSION");
 
-    
     let extensions = [
         "opcache",
         #[cfg(feature = "amqp")]
@@ -216,7 +215,8 @@ fn main() {
         "zlib",
         #[cfg(feature = "zstd")]
         "zstd",
-    ].join(",");
+    ]
+    .join(",");
 
     if !target_exists("spc") {
         std::fs::create_dir_all(target_dir("spc")).unwrap();
@@ -370,6 +370,8 @@ fn main() {
         .flag("-m64")
         .static_flag(true)
         .compile("wrapper");
+    #[cfg(feature = "__zlib")]
+    println!("cargo:rustc-link-lib=z");
 }
 
 fn target_dir(path: &str) -> String {
