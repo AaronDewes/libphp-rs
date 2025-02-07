@@ -87,14 +87,8 @@ impl Sapi for EmbeddedSapi {
         "".to_string()
     }
 
-    fn register_server_variables(track_vars_array: &mut TrackVarsArray) {
-    dbg!("register_server_variables");
-        track_vars_array.insert("TEST_PROP", "THISISATESTPLEASECHECKTHIS12");
-        for (i, key, val) in track_vars_array.as_value().to_array().iter() {
-            dbg!(i);
-            println!("{}", key);
-            dbg!(val);
-        }
+    fn register_server_variables(_track_vars_array: &mut TrackVarsArray) {
+        // Empty
     }
 
     fn get_request_time() -> f64 {
