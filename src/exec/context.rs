@@ -273,11 +273,11 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
     ///
     /// NOTE: This method does not need to be called manually. The execution context is automatically closed when Context is dropped.
     pub fn close(&mut self) {
-        // Explicitly drop the leaked &mut SapiContext
-        drop(unsafe { Box::from_raw(self.content) });
         unsafe {
             php_rust_clear_server_context();
         }
+        // Explicitly drop the leaked &mut SapiContext
+        drop(unsafe { Box::from_raw(self.content) });
         if self.initd {
             unsafe { Sapi::shutdown(std::ptr::null_mut()) };
         }
