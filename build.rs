@@ -346,6 +346,7 @@ fn main() {
         .allowlist_function("libphp_zval_delref_p")
         .allowlist_function("zend_hash_add")
         .allowlist_function("zend_hash_next_index_insert")
+        .allowlist_function("php_rust_get_request_info")
         .allowlist_type("zend_function_entry")
         .header("src/wrapper.h")
         .generate()

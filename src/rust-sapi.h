@@ -56,5 +56,6 @@ int php_rust_init(struct partial_sapi_module_struct module, int argc, char **arg
 void php_rust_clear_server_context();
 void php_rust_set_tmp_server_ctx(void *server_context);
 void php_rust_set_server_context();
+sapi_request_info* php_rust_get_request_info();
 
 #endif /* _PHP_RUST_H_ */
