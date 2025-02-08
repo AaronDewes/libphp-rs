@@ -14,12 +14,11 @@ use crate::{
     value::Value,
 };
 
-pub type OnInitCallback<Sapi> = fn(&mut Context<Sapi>);
 pub type FunctionImplementation = unsafe extern "C" fn(*mut zend_execute_data, *mut zval);
 
 pub struct Context<'a, Sapi: crate::sapi::raw::RawPhpSapi = EmbeddedSapi> {
     initd: bool,
-    on_init: Option<OnInitCallback<Sapi>>,
+    on_init: Option<Box<dyn FnOnce(&mut Context<Sapi>)>>,
     argc: i32,
     argv: Vec<String>,
     bindings: Vec<Value>,
@@ -229,8 +228,8 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
     }
 
     /// Register a callback to be called when the execution context is initialised.
-    pub fn on_init(&mut self, callback: OnInitCallback<Sapi>) {
-        self.on_init = Some(callback);
+    pub fn on_init<F: FnOnce(&mut Context<Sapi>) + 'static>(&mut self, callback:F) {
+        self.on_init = Some(Box::new(callback));
     }
 
     /// Initialise the execution context.
@@ -265,7 +264,7 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
             }
         }
     
-        if let Some(callback) = self.on_init {
+        if let Some(callback) = self.on_init.take() {
             callback(self);
         }
 
