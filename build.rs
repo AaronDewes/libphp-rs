@@ -379,6 +379,12 @@ fn main() {
         .compile("wrapper");
     #[cfg(feature = "__zlib")]
     println!("cargo:rustc-link-lib=z");
+    #[cfg(feature = "xml")]
+    println!("cargo:rustc-link-lib=xml2");
+    #[cfg(feature = "iconv")]
+    println!("cargo:rustc-link-lib=iconv");
+    #[cfg(feature = "curl")]
+    println!("cargo:rustc-link-lib=curl");
 }
 
 fn target_dir(path: &str) -> String {
