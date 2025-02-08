@@ -2,7 +2,7 @@ use std::io::Write;
 
 use super::safe::{Sapi, TrackVarsArray};
 use crate::sys::{
-    php_module_shutdown, php_module_startup, php_request_shutdown, sapi_shutdown, tsrm_shutdown,
+    php_module_shutdown, php_module_startup, php_request_shutdown, sapi_shutdown,
 };
 
 
@@ -29,10 +29,9 @@ impl Sapi for EmbeddedSapi {
 
             /* SAPI shutdown (SSHUTDOWN) */
             sapi_shutdown();
-
-            if crate::sys::ZTS != 0 {
-                tsrm_shutdown();
-            }
+            
+            #[cfg(feature = "zts")]
+            crate::sys::tsrm_shutdown();
         }
         0
     }
