@@ -107,6 +107,7 @@ pub trait Sapi {
     fn get_request_time() -> f64;
     fn terminate_process();
     fn log_message(message: &str, syslog_type_int: i32);
+    fn on_before_request_init() {}
 }
 
 unsafe impl<T: Sapi> RawPhpSapi for T {
@@ -276,6 +277,10 @@ unsafe impl<T: Sapi> RawPhpSapi for T {
         let slice = unsafe { std::ffi::CStr::from_ptr(message) };
         let string = slice.to_str().unwrap();
         T::log_message(string, syslog_type_int)
+    }
+    
+    fn on_before_request_init() {
+        T::on_before_request_init();
     }
 }
 

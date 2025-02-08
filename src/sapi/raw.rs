@@ -38,6 +38,8 @@ pub unsafe trait RawPhpSapi {
     unsafe extern "C" fn terminate_process() -> ();
 
     unsafe extern "C" fn log_message(message: *const c_char, syslog_type_int: c_int) -> ();
+    
+    fn on_before_request_init() {}
 }
 
 pub fn get_partial_module_for_c<Sapi: RawPhpSapi>() -> partial_sapi_module_struct {

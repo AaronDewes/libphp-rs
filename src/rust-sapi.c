@@ -43,7 +43,7 @@ static const zend_function_entry additional_functions[] = {
 // Global var that contains a pointer to the server context
 void *global_server_context;
 
-EMBED_SAPI_API int php_rust_init(struct partial_sapi_module_struct module, int argc, char **argv, void *server_context)
+EMBED_SAPI_API int php_rust_init(struct partial_sapi_module_struct module, void *server_context, char* executable_location)
 {
 #if defined(SIGPIPE) && defined(SIG_IGN)
 	signal(SIGPIPE, SIG_IGN); /* ignore SIGPIPE in standalone mode so
@@ -135,9 +135,9 @@ EMBED_SAPI_API int php_rust_init(struct partial_sapi_module_struct module, int a
 	/* SAPI-provided functions. */
 	php_rust_module.additional_functions = additional_functions;
 
-	if (argv)
+	if (executable_location)
 	{
-		php_rust_module.executable_location = argv[0];
+		php_rust_module.executable_location = executable_location;
 	}
 
 	/* Module initialization (MINIT) */
@@ -150,20 +150,6 @@ EMBED_SAPI_API int php_rust_init(struct partial_sapi_module_struct module, int a
 	 * SAPI with '-C'.
 	 */
 	SG(options) |= SAPI_OPTION_NO_CHDIR;
-
-	SG(request_info).argc = argc;
-	SG(request_info).argv = argv;
-
-	/* Request initialization (RINIT) */
-	if (php_request_startup() == FAILURE)
-	{
-		php_module_shutdown();
-		return FAILURE;
-	}
-
-	/*SG(headers_sent) = 1;
-	SG(request_info).no_headers = 1;*/
-	php_register_variable("PHP_SELF", "-", NULL);
 
 	return SUCCESS;
 }

@@ -9,11 +9,7 @@ use crate::{
         raw::{get_partial_module_for_c, RawPhpSapi},
     },
     sys::{
-        libphp_register_constant, libphp_register_variable, libphp_zval_create_string,
-        php_execute_simple_script, php_rust_clear_server_context, php_rust_init,
-        zend_call_function, zend_eval_string_ex, zend_execute_data, zend_fcall_info,
-        zend_fcall_info_cache, zend_file_handle, zend_function_entry, zend_internal_arg_info,
-        zend_register_functions, zend_stream_init_filename, zend_type, zval,
+        libphp_register_constant, libphp_register_variable, libphp_zval_create_string, php_execute_simple_script, php_module_shutdown, php_rust_clear_server_context, php_rust_init, zend_call_function, zend_eval_string_ex, zend_execute_data, zend_fcall_info, zend_fcall_info_cache, zend_file_handle, zend_function_entry, zend_internal_arg_info, zend_register_functions, zend_stream_init_filename, zend_type, zval
     },
     value::Value,
 };
@@ -262,6 +258,14 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
             );
         }
 
+        
+        unsafe {
+            if php_request_startup() != 0 {
+                php_module_shutdown();
+                panic!("Failed to start PHP request");
+            }
+        }
+    
         if let Some(callback) = self.on_init {
             callback(self);
         }
