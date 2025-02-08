@@ -54,9 +54,11 @@ EMBED_SAPI_API int php_rust_init(struct partial_sapi_module_struct module, void 
 								 20000419 */
 #endif
 
+#ifdef ZTS
 	php_tsrm_startup();
-#ifdef PHP_WIN32
+# ifdef PHP_WIN32
 	ZEND_TSRMLS_CACHE_UPDATE();
+# endif
 #endif
 
 	zend_signal_startup();
@@ -152,20 +154,6 @@ EMBED_SAPI_API int php_rust_init(struct partial_sapi_module_struct module, void 
 	SG(options) |= SAPI_OPTION_NO_CHDIR;
 
 	return SUCCESS;
-}
-
-EMBED_SAPI_API void php_rust_shutdown(void)
-{
-	/* Request shutdown (RSHUTDOWN) */
-	php_request_shutdown((void *)0);
-
-	/* Module shutdown (MSHUTDOWN) */
-	php_module_shutdown();
-
-	/* SAPI shutdown (SSHUTDOWN) */
-	sapi_shutdown();
-
-	tsrm_shutdown();
 }
 
 void php_rust_clear_server_context()

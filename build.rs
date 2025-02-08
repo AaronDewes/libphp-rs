@@ -17,8 +17,7 @@ fn main() {
     println!("cargo:rerun-if-changed=src/php-sapi.c");
     println!("cargo:rerun-if-env-change=PHP_VERSION");
 
-    let extensions = [
-        "opcache",
+    let extensions: &[&'static str] = &[
         #[cfg(feature = "amqp")]
         "amqp",
         #[cfg(feature = "apcu")]
@@ -103,6 +102,8 @@ fn main() {
         "mysqli",
         #[cfg(feature = "mysqlnd")]
         "mysqlnd",
+        #[cfg(feature = "opcache")]
+        "opcache",
         // TODO: oci8 is not supported by static-php-cli yet
         //#[cfg(feature = "oci8")]
         //"oci8",
@@ -215,8 +216,9 @@ fn main() {
         "zlib",
         #[cfg(feature = "zstd")]
         "zstd",
-    ]
-    .join(",");
+    ];
+    
+    let extensions = extensions.join(",");
 
     if !target_exists("spc") {
         std::fs::create_dir_all(target_dir("spc")).unwrap();
@@ -277,6 +279,7 @@ fn main() {
                 "build",
                 &extensions,
                 "--build-embed",
+                #[cfg(feature = "zts")]
                 "--enable-zts",
             ],
         );
@@ -299,6 +302,8 @@ fn main() {
         .derive_debug(true)
         .allowlist_var("PHP_OUTPUT_HANDLER_STDFLAGS")
         .allowlist_type("zval")
+        .allowlist_var("ZTS")
+        .allowlist_type("ZTS")
         .allowlist_type("zend_constant")
         .allowlist_type("zend_fcall_info")
         .allowlist_type("sapi_header_struct")

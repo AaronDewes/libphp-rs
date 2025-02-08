@@ -30,7 +30,9 @@ impl Sapi for EmbeddedSapi {
             /* SAPI shutdown (SSHUTDOWN) */
             sapi_shutdown();
 
-            tsrm_shutdown();
+            if crate::sys::ZTS != 0 {
+                tsrm_shutdown();
+            }
         }
         0
     }

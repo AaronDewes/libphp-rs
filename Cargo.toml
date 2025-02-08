@@ -64,7 +64,7 @@ mysqlnd = []
 # TODO
 # oci8 = []
 # Always on
-#opcache = []
+opcache = []
 openssl = []
 opentelemetry = []
 parallel = []
@@ -124,3 +124,6 @@ zip = []
 zlib = ["__zlib"]
 zstd = []
 __zlib = []
+zts = []
+
+default = ["zts"]
