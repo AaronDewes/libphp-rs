@@ -52,7 +52,7 @@ struct partial_sapi_module_struct {
 	void (*terminate_process)(void);
 };
 
-int php_rust_init(struct partial_sapi_module_struct module, int argc, char **argv, void* server_context);
+int php_rust_init(struct partial_sapi_module_struct module, void *server_context, char* executable_location);
 void php_rust_clear_server_context();
 void php_rust_set_tmp_server_ctx(void *server_context);
 void php_rust_set_server_context();

@@ -9,7 +9,7 @@ use crate::{
         raw::{get_partial_module_for_c, RawPhpSapi},
     },
     sys::{
-        libphp_register_constant, libphp_register_variable, libphp_zval_create_string, php_execute_simple_script, php_module_shutdown, php_rust_clear_server_context, php_rust_init, zend_call_function, zend_eval_string_ex, zend_execute_data, zend_fcall_info, zend_fcall_info_cache, zend_file_handle, zend_function_entry, zend_internal_arg_info, zend_register_functions, zend_stream_init_filename, zend_type, zval
+        libphp_register_constant, libphp_register_variable, libphp_zval_create_string, php_execute_simple_script, php_module_shutdown, php_request_startup, php_rust_clear_server_context, php_rust_init, zend_call_function, zend_eval_string_ex, zend_execute_data, zend_fcall_info, zend_fcall_info_cache, zend_file_handle, zend_function_entry, zend_internal_arg_info, zend_register_functions, zend_stream_init_filename, zend_type, zval
     },
     value::Value,
 };
@@ -244,17 +244,15 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
         unsafe {
             php_rust_init(
                 get_partial_module_for_c::<Sapi>(),
-                self.argc,
+                self.content as *mut Sapi::Context as *mut std::ffi::c_void,
                 if self.argv.is_empty() {
                     null_mut()
                 } else {
                     self.argv
-                        .iter_mut()
-                        .map(|arg| arg.as_ptr() as *mut i8)
-                        .collect::<Vec<*mut i8>>()
-                        .as_mut_ptr()
+                        .first()
+                        .unwrap()
+                        .as_ptr() as *mut i8
                 },
-                self.content as *mut Sapi::Context as *mut std::ffi::c_void,
             );
         }
 
