@@ -386,8 +386,9 @@ fn main() {
     #[cfg(feature = "curl")]
     {
         println!("cargo:rustc-link-lib=curl");
-        // TODO: Auto-detect what we need
+        // TODO: Auto-detect if we need anothr SSL/Crypto impl
         println!("cargo:rustc-link-lib=ssl");
+        println!("cargo:rustc-link-lib=crypto");
     }
 }
 
