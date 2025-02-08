@@ -42,6 +42,7 @@ static const zend_function_entry additional_functions[] = {
 
 // Global var that contains a pointer to the server context
 void *global_server_context;
+static sapi_module_struct g_php_rust_module;
 
 EMBED_SAPI_API int php_rust_init(struct partial_sapi_module_struct module, void *server_context, char* executable_location)
 {
@@ -64,7 +65,6 @@ EMBED_SAPI_API int php_rust_init(struct partial_sapi_module_struct module, void 
 	zend_signal_startup();
 
 	global_server_context = server_context;
-
 	sapi_module_struct php_rust_module = {
 		module.name,
 		module.pretty_name,
@@ -97,6 +97,8 @@ EMBED_SAPI_API int php_rust_init(struct partial_sapi_module_struct module, void 
 		module.terminate_process,
 
 		STANDARD_SAPI_MODULE_PROPERTIES};
+		
+	g_php_rust_module = php_rust_module;
 
 	/* SAPI initialization (SINIT)
 	 *
@@ -108,7 +110,7 @@ EMBED_SAPI_API int php_rust_init(struct partial_sapi_module_struct module, void 
 	 * This also sets 'php_rust_module.ini_entries = NULL' so we cannot
 	 * allocate the INI entries until after this call.
 	 */
-	sapi_startup(&php_rust_module);
+	sapi_startup(&g_php_rust_module);
 
 #ifdef PHP_WIN32
 	_fmode = _O_BINARY;					 /*sets default for file streams to binary */
@@ -132,18 +134,18 @@ EMBED_SAPI_API int php_rust_init(struct partial_sapi_module_struct module, void 
 	 * allocated so any INI settings added via this callback will have the
 	 * lowest precedence and will allow INI files to overwrite them.
 	 */
-	php_rust_module.ini_entries = HARDCODED_INI;
+	g_php_rust_module.ini_entries = HARDCODED_INI;
 
 	/* SAPI-provided functions. */
-	php_rust_module.additional_functions = additional_functions;
+	g_php_rust_module.additional_functions = additional_functions;
 
 	if (executable_location)
 	{
-		php_rust_module.executable_location = executable_location;
+		g_php_rust_module.executable_location = executable_location;
 	}
 
 	/* Module initialization (MINIT) */
-	if (php_rust_module.startup(&php_rust_module) == FAILURE)
+	if (g_php_rust_module.startup(&g_php_rust_module) == FAILURE)
 	{
 		return FAILURE;
 	}
