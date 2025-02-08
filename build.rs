@@ -217,7 +217,7 @@ fn main() {
         #[cfg(feature = "zstd")]
         "zstd",
     ];
-    
+
     let extensions = extensions.join(",");
 
     if !target_exists("spc") {
@@ -384,7 +384,11 @@ fn main() {
     #[cfg(feature = "iconv")]
     println!("cargo:rustc-link-lib=iconv");
     #[cfg(feature = "curl")]
-    println!("cargo:rustc-link-lib=curl");
+    {
+        println!("cargo:rustc-link-lib=curl");
+        // TODO: Auto-detect what we need
+        println!("cargo:rustc-link-lib=ssl");
+    }
 }
 
 fn target_dir(path: &str) -> String {
