@@ -256,6 +256,7 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
             );
         }
 
+        Sapi::on_before_request_init();
         
         unsafe {
             if php_request_startup() != 0 {
