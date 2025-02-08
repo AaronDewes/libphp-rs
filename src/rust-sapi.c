@@ -185,7 +185,7 @@ EMBED_SAPI_API void php_rust_shutdown(void)
 void php_rust_clear_server_context()
 {
 	global_server_context = NULL;
-	SG(server_context) = NULL;
+	//SG(server_context) = NULL;
 }
 
 void php_rust_set_server_context()
