@@ -126,4 +126,4 @@ zstd = []
 __zlib = []
 zts = []
 
-default = ["zts"]
+default = ["opcache", "zts"]
