@@ -9,7 +9,7 @@ fn main() {
     let strlen_result = context.call_with("strlen", &["Hello, world!"]);
     dbg!(strlen_result);
 
-    context.execute_file("./examples/scripts/functions.php");
+    context.execute_file("./examples/scripts/functions.php", false);
 
     let fib_30_result = context.call_with("fib", &[35]);
     dbg!(fib_30_result);

@@ -145,6 +145,10 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
 
         Value::new(&retval_ptr)
     }
+    
+    pub fn clear_bindings(&mut self) {
+        self.bindings.clear();
+    }
 
     /// Evaluate a PHP expression and get the result.
     pub fn result_of(&mut self, expression: &str, clear_globals: bool) -> Value {
@@ -286,6 +290,7 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
 
 impl<Sapi: RawPhpSapi> Drop for Context<'_, Sapi> {
     fn drop(&mut self) {
+        self.clear_bindings();
         self.close();
     }
 }

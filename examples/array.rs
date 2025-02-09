@@ -2,7 +2,7 @@ use libphp::exec::Context;
 
 fn main() {
     let mut context = Context::new();
-    let array = context.result_of("[1, 2, 3, 4, 5, 'key' => 6]");
+    let array = context.result_of("[1, 2, 3, 4, 5, 'key' => 6]", false);
 
     println!("The array returned is: {array:?}");
     println!("is_array(): {}", array.is_array());

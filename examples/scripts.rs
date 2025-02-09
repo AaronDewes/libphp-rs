@@ -8,7 +8,7 @@ fn main() {
         .expect("Please provide the name of the script you would like to execute.");
 
     let mut context = Context::new();
-    let return_value = context.execute_file(&file);
+    let return_value = context.execute_file(&file, false);
 
     println!("Return value of script: {:?}", return_value);
 }

@@ -7,6 +7,6 @@ fn main() {
         ctx.bind("myVar", "Hello, this variable is defined in Rust!");
     });
 
-    let my_var = context.result_of("$myVar");
+    let my_var = context.result_of("$myVar", false);
     println!("my_var = {:?}", my_var);
 }
