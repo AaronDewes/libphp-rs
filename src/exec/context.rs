@@ -1,5 +1,5 @@
 use std::{
-    ffi::CString,
+    ffi::{c_char, CString},
     ptr::{null, null_mut},
 };
 
@@ -9,7 +9,12 @@ use crate::{
         raw::{get_partial_module_for_c, RawPhpSapi},
     },
     sys::{
-        libphp_register_constant, libphp_register_variable, libphp_zval_create_string, php_execute_simple_script, php_module_shutdown, php_request_startup, php_rust_clear_server_context, php_rust_init, zend_call_function, zend_eval_string_ex, zend_execute_data, zend_fcall_info, zend_fcall_info_cache, zend_file_handle, zend_function_entry, zend_internal_arg_info, zend_register_functions, zend_stream_init_filename, zend_type, zval
+        libphp_eval_stringl_ex, libphp_execute_simple_script, libphp_register_constant,
+        libphp_register_variable, libphp_zval_create_string, php_module_shutdown,
+        php_request_startup, php_rust_clear_server_context, php_rust_init, zend_call_function,
+        zend_execute_data, zend_fcall_info, zend_fcall_info_cache, zend_file_handle,
+        zend_function_entry, zend_internal_arg_info, zend_register_functions,
+        zend_stream_init_filename, zend_type, zval,
     },
     value::Value,
 };
@@ -122,7 +127,7 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
     }
 
     /// Execute a PHP file.
-    pub fn execute_file(&mut self, file: &str) -> Value {
+    pub fn execute_file(&mut self, file: &str, reset_global_ctx: bool) -> Value {
         let mut file_handle = zend_file_handle::default();
         let cstring = CString::new(file).unwrap();
 
@@ -135,19 +140,14 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
         let mut retval_ptr = zval::default();
 
         unsafe {
-            php_execute_simple_script(&mut file_handle, &mut retval_ptr);
+            libphp_execute_simple_script(&mut file_handle, &mut retval_ptr, reset_global_ctx);
         }
-
-        self.bindings.clear();
 
         Value::new(&retval_ptr)
     }
 
     /// Evaluate a PHP expression and get the result.
-    pub fn result_of(&mut self, expression: &str) -> Value {
-        let code_cstring =
-            CString::new(expression).expect("Failed to convert the given code to a C string.");
-
+    pub fn result_of(&mut self, expression: &str, clear_globals: bool) -> Value {
         let script_name = CString::new("eval'd code").unwrap();
 
         self.init();
@@ -155,11 +155,12 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
         let mut retval_ptr = zval::default();
 
         unsafe {
-            zend_eval_string_ex(
-                code_cstring.as_ptr(),
+            libphp_eval_stringl_ex(
+                expression.as_ptr() as *const c_char,
+                expression.len(),
                 &mut retval_ptr as *mut zval,
                 script_name.as_ptr(),
-                true,
+                clear_globals,
             );
         }
 
@@ -228,7 +229,7 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
     }
 
     /// Register a callback to be called when the execution context is initialised.
-    pub fn on_init<F: FnOnce(&mut Context<Sapi>) + 'static>(&mut self, callback:F) {
+    pub fn on_init<F: FnOnce(&mut Context<Sapi>) + 'static>(&mut self, callback: F) {
         self.on_init = Some(Box::new(callback));
     }
 
@@ -247,23 +248,20 @@ impl<'a, Sapi: RawPhpSapi> Context<'a, Sapi> {
                 if self.argv.is_empty() {
                     null_mut()
                 } else {
-                    self.argv
-                        .first()
-                        .unwrap()
-                        .as_ptr() as *mut i8
+                    self.argv.first().unwrap().as_ptr() as *mut i8
                 },
             );
         }
 
         Sapi::on_before_request_init();
-        
+
         unsafe {
             if php_request_startup() != 0 {
                 php_module_shutdown();
                 panic!("Failed to start PHP request");
             }
         }
-    
+
         if let Some(callback) = self.on_init.take() {
             callback(self);
         }

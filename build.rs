@@ -349,6 +349,8 @@ fn main() {
         .allowlist_function("php_register_variable_safe")
         .allowlist_function("libphp_zval_addref_p")
         .allowlist_function("libphp_zval_delref_p")
+        .allowlist_function("libphp_eval_stringl_ex")
+        .allowlist_function("libphp_execute_simple_script")
         .allowlist_function("zend_hash_add")
         .allowlist_function("zend_hash_next_index_insert")
         .allowlist_function("php_rust_get_request_info")

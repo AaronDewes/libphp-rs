@@ -5,7 +5,9 @@ use std::{
 };
 
 use crate::sys::{
-    libphp_var_export, libphp_zval_addref_p, libphp_zval_delref_p, libphp_zval_get_string, libphp_zval_get_type, zend_refcounted, zval, zval_ptr_dtor, HashTable, IS_ARRAY, IS_DOUBLE, IS_FALSE, IS_LONG, IS_NULL, IS_STRING, IS_TRUE
+    libphp_var_export, libphp_zval_addref_p, libphp_zval_delref_p, libphp_zval_get_string,
+    libphp_zval_get_type, zval, zval_ptr_dtor, HashTable, IS_ARRAY, IS_DOUBLE, IS_FALSE, IS_LONG,
+    IS_NULL, IS_STRING, IS_TRUE,
 };
 
 use self::array::Array;
@@ -36,7 +38,7 @@ impl InnerValue {
             InnerValue::Borrowed(zval) => zval.as_ptr(),
         }
     }
-    
+
     fn as_mut_ptr(&mut self) -> *mut zval {
         match self {
             InnerValue::Owned(zval) => zval.as_mut(),
@@ -78,13 +80,15 @@ impl Value {
         let zval_inner = unsafe { zval.as_ref() };
         unsafe {
             // TODO: Check if this is correct
-            if zval_inner.value.counted.is_null() || zval_inner.value.lval == (zval_inner.value.counted.addr() as i64) {
+            if zval_inner.value.counted.is_null()
+                || zval_inner.value.lval == (zval_inner.value.counted.addr() as i64)
+            {
                 return Self {
                     inner: InnerValue::Owned(Box::new(*zval.as_ptr())),
                 };
             } else {
                 let zval_inner_counted = zval_inner.value.counted;
-                
+
                 dbg!((*zval_inner_counted).gc.u.type_info);
                 println!("Aligned");
             }

@@ -1,4 +1,4 @@
-use std::{ffi::CString, ptr::NonNull};
+use std::ffi::CString;
 
 use crate::sys::{libphp_zend_string_init, libphp_zval_create_string, zend_string, zval};
 
@@ -21,7 +21,5 @@ impl From<&str> for Value {
 // str is memcopyed to zend_string, so we don't have to worry about the lifetime of the string.
 pub fn create_zend_str(str: &str) -> *mut zend_string {
     let cstr = CString::new(str).unwrap();
-    unsafe {
-        libphp_zend_string_init(cstr.as_ptr())
-    }
+    unsafe { libphp_zend_string_init(cstr.as_ptr()) }
 }
