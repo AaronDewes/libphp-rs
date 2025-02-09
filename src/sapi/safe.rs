@@ -217,7 +217,7 @@ unsafe impl<T: Sapi> RawPhpSapi for T {
     ) -> () {
         let sapi_header = NonNull::new(sapi_header);
         let ctx = server_context as *mut T::Context;
-        let mut ctx = NonNull::new(ctx);
+        let ctx = NonNull::new(ctx);
         if let Some(sapi_header) = sapi_header {
             let sapi_header = sapi_header.as_ref();
             let header = unsafe {
